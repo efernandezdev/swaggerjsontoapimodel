@@ -65,7 +65,7 @@ for (let i = 1; i < args.length; i++) {
         process.exit(1);
       }
 
-      outputDir = `${value.replace(/\/$/, "")}/model/`;
+      outputDir = `${value.replace(/\/$/, "")}/api-model/`;
       break;
     }
 
@@ -314,11 +314,11 @@ function buildArrayType(itemType: any, type: string | null): string {
 function generateInterface({
   schemaName,
   schema,
-  pathToInterface,
+  pathAbove,
 }: {
   schemaName: string;
   schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject;
-  pathToInterface?: string;
+  pathAbove?: boolean;
 }): string {
   if ("$ref" in schema) {
     throw new Error(
@@ -339,11 +339,9 @@ function generateInterface({
     .sort((a, b) => a.localeCompare(b))
     .map((name) => {
       const typeName = pascalCase(name);
-      const fileName = safeFileName(name);
+      const fileName = camelCase(name);
 
-      const folderPath = pathToInterface
-        ? `../${pathToInterface}/${fileName}`
-        : `./${fileName}`;
+      const folderPath = pathAbove ? `../${fileName}` : `./${fileName}`;
 
       return `import type { ${typeName} } from "${folderPath}";`;
     })
@@ -547,27 +545,27 @@ async function main() {
     recursive: true,
   });
 
-  // Generate allSchemas into interface
+  // Generate allSchemas
   if (Object.keys(allSchemas).length) {
-    rmSync(outputDir + "/interfaces", {
+    rmSync(outputDir, {
       recursive: true,
       force: true,
     });
 
-    mkdirSync(outputDir + "/interfaces", {
+    mkdirSync(outputDir, {
       recursive: true,
     });
 
     for (const [schemaName, schema] of Object.entries(allSchemas)) {
-      const fileName = `${safeFileName(schemaName)}.ts`;
+      const fileName = `${camelCase(schemaName)}.ts`;
 
       const content = generateInterface({ schemaName, schema });
 
-      const filePath = join(outputDir + "/interfaces", fileName);
+      const filePath = join(outputDir, fileName);
 
       writeFileSync(filePath, content, "utf8");
 
-      console.log(`✓ ${fileName}`);
+      console.log(`${fileName}`);
     }
   }
 
@@ -588,7 +586,7 @@ async function main() {
       const content = generateInterface({
         schemaName,
         schema,
-        pathToInterface: "interfaces",
+        pathAbove: true,
       });
 
       const filePath = join(outputDir + "/query-params", fileName);

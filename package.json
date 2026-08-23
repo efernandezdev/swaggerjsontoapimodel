@@ -1,0 +1,42 @@
+{
+  "name": "swaggerjsontoapimodel",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "script to convert swagger json to api model, this help us to create interface",
+  "author": "Esteban Fernandez <efernandezdev@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "openapi",
+    "cli",
+    "typescript",
+    "codegen"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/efernandezdev/swaggerjsontoapimodel.git"
+  },
+  "homepage": "https://github.com/efernandezdev/swaggerjsontoapimodel#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "bin/bin.js",
+  "scripts": {
+    "dev": "tsx src/bin.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node bin/bin.js",
+    "prepublishOnly": "npm run build"
+  },
+  "bin": {
+    "swaggerjsontoapimodel": "bin/bin.js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "openapi-types": "^12.1.3",
+    "tsx": "^4.20.0",
+    "typescript": "^7.0.2"
+  },
+  "files": [
+    "bin"
+  ]
+}

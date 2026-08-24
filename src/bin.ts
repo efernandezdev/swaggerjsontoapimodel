@@ -581,7 +581,7 @@ async function main() {
     });
 
     for (const [schemaName, schema] of Object.entries(queryParams)) {
-      const fileName = `${safeFileName(schemaName)}.ts`;
+      const fileName = `${camelCase(schemaName)}.ts`;
 
       const content = generateInterface({
         schemaName,

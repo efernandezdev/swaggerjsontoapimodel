@@ -1,6 +1,6 @@
 {
   "name": "swaggerjsontoapimodel",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "type": "module",
   "description": "script to convert swagger json to api model, this help us to create interface",
   "author": "Esteban Fernandez <efernandezdev@gmail.com>",

@@ -9,8 +9,9 @@ A CLI tool that converts OpenAPI/Swagger v3 JSON documents into TypeScript model
 - Generates query parameter interfaces per endpoint (e.g., `GetUsersOrders`), so you get typed query objects out of the box.
 - Full support for `$ref` resolution with automatic imports between generated files.
 - Supports `nullable`, `enum` (as union types), arrays (with parentheses around unions), `allOf` / `oneOf` / `anyOf` composition, and `additionalProperties` (mapped to `Record<string, T>`).
-- Naming conventions applied automatically: `PascalCase` for types/interfaces and `camelCase` for properties.
+- Naming conventions applied automatically: `PascalCase` for types/interfaces and `camelCase` for properties (Unicode-aware, so names with accented/non-Latin characters keep their letters).
 - Marks non-required properties as optional (`?`) based on the `required` array.
+- Emits the TypeScript `readonly` modifier for properties marked as `readOnly: true` in the OpenAPI document.
 
 ## Installation
 
@@ -46,7 +47,7 @@ MSYS_NO_PATHCONV=1 npx swaggerjsontoapimodel <openapi.json | url> [options]
 
 | Option                    | Description                                                                                    | Default        |
 | ------------------------- | ---------------------------------------------------------------------------------------------- | -------------- |
-| `-o, --output <dir>`      | Output directory. Files are written inside `<dir>/model/`.                                     | `./api-model/` |
+| `-o, --output <dir>`      | Output directory. Files are written inside `<dir>/api_model/`.                                 | `./api_model/` |
 | `-bs, --base-path <path>` | Base path to strip from route names when generating query param interfaces (e.g., `/api/v1/`). | _(empty)_      |
 | `-h, --help`              | Show help.                                                                                     |                |
 
@@ -70,7 +71,7 @@ With no options at all:
 swaggerjsontoapimodel openapi.json
 ```
 
-This generates everything into `./api-model/model/`.
+This generates everything into `./api_model/`.
 
 > Note: the output directory is wiped and recreated on every run, so treat it as generated code.
 
@@ -86,23 +87,22 @@ The following structure is produced:
 
 ```
 generated/
-└── model/
-    ├── interfaces/
-    │   ├── user.ts
-    │   └── address.ts
+└── api_model/
+    ├── user.ts
+    ├── address.ts
     └── query-params/
         └── getusersorders.ts
 ```
 
-- `model/interfaces/` — one file per schema from `components.schemas`.
-- `model/query-params/` — one file per endpoint that declares query parameters, named after the HTTP method and route (with the base path stripped).
+- `generated/api_model/` — one file per schema from `components.schemas`.
+- `generated/api_model/query-params/` — one file per endpoint that declares query parameters, named after the HTTP method and route (with the base path stripped).
 
 ## Example of generated code
 
 For a `User` schema referencing an `Address` schema:
 
 ```typescript
-// model/interfaces/user.ts
+// api_model/user.ts
 import type { Address } from "./address";
 
 export interface User {
@@ -116,7 +116,7 @@ export interface User {
 For a `GET /users/{id}/orders` endpoint with `page` and `limit` query parameters:
 
 ```typescript
-// model/query-params/getusersorders.ts
+// api_model/query-params/getusersorders.ts
 export interface GetUsersOrders {
   page?: number;
   limit?: number;
@@ -127,6 +127,15 @@ Enum-only schemas are generated as union types instead of interfaces:
 
 ```typescript
 export type Status = "active" | "inactive";
+```
+
+Properties marked as `readOnly: true` in the OpenAPI document get the TypeScript `readonly` modifier:
+
+```typescript
+export interface User {
+  readonly id: number;
+  name?: string;
+}
 ```
 
 ## License

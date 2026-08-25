@@ -49,7 +49,7 @@ Example:
 
 const inputSource = args[0];
 
-let outputDir: string = "./api-model/";
+let outputDir: string = "./api_model/";
 let basePath: string = "";
 
 for (let i = 1; i < args.length; i++) {
@@ -65,7 +65,7 @@ for (let i = 1; i < args.length; i++) {
         process.exit(1);
       }
 
-      outputDir = `${value.replace(/\/$/, "")}/api-model/`;
+      outputDir = `${value.replace(/\/$/, "")}/api_model/`;
       break;
     }
 
@@ -94,7 +94,7 @@ for (let i = 1; i < args.length; i++) {
 
 function pascalCase(value: string): string {
   return value
-    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .split(" ")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -103,7 +103,7 @@ function pascalCase(value: string): string {
 
 function camelCase(value: string): string {
   return value
-    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .split(" ")
     .filter(Boolean)
     .map((part) => part.charAt(0).toLowerCase() + part.slice(1))
@@ -146,7 +146,7 @@ function getQueryParamInterfaceName(
 
   const pathWords = cleanPath
     .replace(/\/\{[^}]*\}/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, " ");
+    .replace(/[^\p{L}\p{N}]+/gu, " ");
 
   return pascalCase(`${method} ${pathWords}`);
 }
@@ -253,12 +253,12 @@ function schemaToType(
     const itemType = schemaToType(schema.items);
 
     // Parentheses are needed for arrays of unions.
-    type = buildArrayType(itemType, type);
+    type = buildArrayType(itemType);
   }
 
   // object with additionalProperties
   if (schema.type === "object" && schema.additionalProperties) {
-    type = buildObjectType(schema, type);
+    type = buildObjectType(schema);
   }
 
   // allOf
@@ -291,7 +291,7 @@ function schemaToType(
   return type;
 }
 
-function buildObjectType(schema: any, type: string | null): string {
+function buildObjectType(schema: any): string {
   if (schema.additionalProperties === true) {
     return "Record<string, unknown>";
   } else {
@@ -299,7 +299,7 @@ function buildObjectType(schema: any, type: string | null): string {
   }
 }
 
-function buildArrayType(itemType: any, type: string | null): string {
+function buildArrayType(itemType: any): string {
   if (itemType.includes(" | ") || itemType.includes(" & ")) {
     return `(${itemType})[]`;
   } else {
@@ -356,10 +356,13 @@ function generateInterface({
       const type = schemaToType(propertySchema);
 
       const optional = required.has(propertyName) ? "" : "?";
+      const readonly = (propertySchema as OpenAPIV3.SchemaObject).readOnly
+        ? "readonly "
+        : "";
 
       const normalizeCamelCase = camelCase(propertyName);
 
-      return `  ${normalizeCamelCase}${optional}: ${type};`;
+      return `  ${readonly}${normalizeCamelCase}${optional}: ${type};`;
     })
     .join("\n");
 
@@ -547,15 +550,6 @@ async function main() {
 
   // Generate allSchemas
   if (Object.keys(allSchemas).length) {
-    rmSync(outputDir, {
-      recursive: true,
-      force: true,
-    });
-
-    mkdirSync(outputDir, {
-      recursive: true,
-    });
-
     for (const [schemaName, schema] of Object.entries(allSchemas)) {
       const fileName = `${camelCase(schemaName)}.ts`;
 
@@ -571,11 +565,6 @@ async function main() {
 
   // Generate queryParams into query-params
   if (Object.keys(queryParams).length) {
-    rmSync(outputDir + "/query-params", {
-      recursive: true,
-      force: true,
-    });
-
     mkdirSync(outputDir + "/query-params", {
       recursive: true,
     });
